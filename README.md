@@ -15,7 +15,7 @@ CLOUD_API_KEY=
 CLOUD_REDIRECT_URI=
 ```
 
-Ensure that you have the necessary credentials for Google Cloud API. The credentials.json file should be present.
+Include 'credentials.json' file with required credentials for Google Cloud API authentication.
 
 ## Run the script
 
@@ -26,6 +26,5 @@ python main.py
 ## Follow the Authentication Process
 The script will guide you through the OAuth2 authentication process for Google Cloud. Follow the prompts to authenticate.
 
-## Playlist Creation:
+## Playlist Creation
 The script will fetch tracks from the specified Spotify playlist, search for corresponding YouTube videos, and create a new YouTube playlist. The process will be logged in the console.
-

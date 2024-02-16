@@ -29,13 +29,10 @@ def extract_playlist_tracks_info(tracks):
     return playlist_info
 
 
-def search_youtube_video(api_key, query):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = api_key
+def search_youtube_video(cloud_api_key, query):
+    # Build youtube api
+    youtube = build('youtube', 'v3', developerKey=cloud_api_key)
 
-    # Build the YouTube API service
-    youtube = build('youtube', 'v3', developerKey=api_key)
-
-    # Make a search request
     request = youtube.search().list(
         part='snippet',
         q=query,
@@ -49,17 +46,16 @@ def search_youtube_video(api_key, query):
     return video_id
 
 
-def create_playlist(api_key, video_ids, playlist_title, youtube_redirect_uri):
+def create_playlist(cloud_api_key, video_ids, playlist_title, cloud_redirect_uri):
     # OAuth2 authentication
-
     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        'credentials.json', scopes=['https://www.googleapis.com/auth/youtube.force-ssl'], redirect_uri=youtube_redirect_uri)
-    credentials = flow.run_local_server(port=8080)
+        'credentials.json', scopes=['https://www.googleapis.com/auth/youtube.force-ssl'], redirect_uri=cloud_redirect_uri)
+    credentials = flow.run_local_server(port=8888)
 
-    youtube = build('youtube', 'v3', developerKey=api_key,
+    # Build youtube api
+    youtube = build('youtube', 'v3', developerKey=cloud_api_key,
                     credentials=credentials)
 
-    # Create a new playlist
     playlist_request = youtube.playlists().insert(
         part='snippet',
         body={
@@ -69,8 +65,8 @@ def create_playlist(api_key, video_ids, playlist_title, youtube_redirect_uri):
             }
         }
     )
-    playlist_response = playlist_request.execute()
 
+    playlist_response = playlist_request.execute()
     new_playlist_id = playlist_response['id']
 
     # Add videos to the playlist
@@ -94,34 +90,22 @@ def create_playlist(api_key, video_ids, playlist_title, youtube_redirect_uri):
 
 
 if __name__ == "__main__":
-    client_id = os.environ.get("SPOTIPY_CLIENT_ID")
-    client_secret = os.environ.get("SPOTIPY_CLIENT_SECRET")
-    redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
     username = os.environ.get("SPOTIPY_USERNAME")
     playlist_id = os.environ.get("SPOTIPY_PLAYLIST_ID")
-
-    if not all([client_id, client_secret, redirect_uri, username, playlist_id]):
-        print("Please set the following environment variables: SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, SPOTIPY_USERNAME, SPOTIPY_PLAYLIST_ID, SPOTIPY_USERNAME")
-        exit(1)
-
-    # Set Spotify API credentials
-    # os.environ["SPOTIPY_CLIENT_ID"] = client_id
-    # os.environ["SPOTIPY_CLIENT_SECRET"] = client_secret
-    # os.environ["SPOTIPY_REDIRECT_URI"] = redirect_uri
-
+    
     tracks = get_playlist_tracks(username, playlist_id)
     tracks = extract_playlist_tracks_info(tracks)
 
-    print(tracks)
+    cloud_api_key = os.environ.get("CLOUD_API_KEY")
 
-    # search each track individually
-    api_key = os.environ.get("YOUTUBE_API_KEY")
-
+    # Array of all video id's
     video_ids = []
     for track in tracks:
-        video_ids.append(search_youtube_video(api_key, track))
+        video_ids.append(search_youtube_video(cloud_api_key, track))
 
-    # todo uri doesnt work
-    youtube_redirect_uri = os.environ.get("YOUTUBE_REDIRECT_URI")
-    create_playlist(api_key, video_ids,
-                    "Automated Playlist pog", youtube_redirect_uri)
+
+    cloud_redirect_uri = os.environ.get("CLOUD_REDIRECT_URI")
+    create_playlist(cloud_api_key, video_ids,
+                    "Automated Spotify Playlist", cloud_redirect_uri)
+    
+    
